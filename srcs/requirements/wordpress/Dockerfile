@@ -1,32 +1,25 @@
-FROM debian:buster
 
-RUN apt-get update
+FROM	debian:buster
 
-RUN apt-get upgrade
+RUN     apt update -y && \
+        apt-get upgrade -y && \
+        apt-get install -y php \
+        php-mysql \
+        php-cli \
+        php-mbstring \
+        php-fpm \
+        php-gettext \
+        mariadb-client \
+        wget && \
+        rm -rf /etc/php/7.3/fpm/pool.d/www.conf && \
+        mkdir -p /run/php
 
-RUN apt-get -y install wget
+COPY    ./conf/www.conf /etc/php/7.3/fpm/pool.d/
 
-RUN apt-get install -y php7.3 \
-    php-fpm\
-    php-mysql\
-    mariadb-client
+COPY    ./tools/wordpress.sh /tmp/
 
-RUN wget https://fr.wordpress.org/wordpress-6.4.1-fr_FR.tar.gz -P /var/www
+RUN     chmod +x /tmp/wordpress.sh
 
-RUN cd /var/www && tar -xzf wordpress-6.4.1-fr_FR.tar.gz && rm wordpress-6.4.1-fr_FR.tar.gz
+#EXPOSE	9000
 
-RUN chown -R root:root /var/www/wordpress
-
-COPY conf/www.conf /etc/ph/7.3/fpm/pool.d/www.conf
-
-RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-
-RUN chmod +x wp-cli.phar
-
-RUN mv wp-cli.phar /usr/local/bin/wp
-
-ENTRYPOINT [ "auto_config.sh" ]
-
-RUN mkdir -p /run/php
-
-CMD ["/usr/sbin/php-fpm7.3", "-F"]
+ENTRYPOINT [ "sh", "/tmp/wordpress.sh" ]

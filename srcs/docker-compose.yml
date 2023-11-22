@@ -1,20 +1,26 @@
 version: '3'
+
 services:
+
   mariadb:
     container_name: mariadb
-    networks:
-      - inception
     build: 
       context: requirements/mariadb
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile    
+    image: mariadb
+    networks:
+      - inception
     env_file:
       - .env
     volumes:
       - mariadb:/var/lib/mysql
-    restart: unless-stopped
-    expose:
-      - "3306"
+    restart: always
+
   nginx:
+    build: 
+      context: requirements/nginx
+      dockerfile: Dockerfile
+    image: nginx
     container_name: nginx
     volumes:
       - wordpress:/var/www/wordpress
@@ -22,15 +28,17 @@ services:
       - inception
     depends_on:
       - wordpress
-    build: 
-      context: requirements/nginx
-      dockerfile: Dockerfile
     env_file:
       - .env
     ports:
-      - 443:443
+      - "443:443"
     restart: always
+  
   wordpress:
+    build: 
+      context: requirements/wordpress
+      dockerfile: Dockerfile    
+    image: wordpress
     container_name: wordpress
     env_file:
       - .env
@@ -38,29 +46,29 @@ services:
       - wordpress:/var/www/wordpress
     networks:
       - inception
-    build: 
-      context: requirements/wordpress
-      dockerfile: Dockerfile
     depends_on:
       - mariadb
-    restart: on-failure
-    expose:
-      - "9000"
-
-volumes:
-  wordpress:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /home/${USER}/data/wordpress
-  mariadb:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /home/${USER}/data/mariadb
+    restart: always
 
 networks:
+  
   inception:
     driver: bridge
+
+volumes:
+  
+  wordpress:
+    name: wordpress_volume
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/tictac/data/wordpress
+  
+  mariadb:
+    name: mariadb_volumes
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/tictac/data/mariadb

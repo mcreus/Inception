@@ -1,24 +1,20 @@
 FROM debian:buster
 
-RUN apt update \
-    && apt-get install nginx -y \
-    && apt-get install vim -y \
-    && apt-get install curl -y
+RUN apt-get update -y \
+    && apt-get upgrade -y \
+    && apt-get install -y nginx openssl \
+    && mkdir -p /etc/nginx/ssl \
+    && mkdir -p /run/nginx \
+    && chown -R www-data /var/lib/nginx
 
-RUN mkdir -p /etc/nginx/ssl
+COPY ./conf/server.conf /etc/nginx/sites-available/default.conf
 
-RUN apt-get install -y openssl
+COPY ./conf/nginx.conf /etc/nginx/nginx.conf
 
-RUN openssl req -x509 -nodes -out /etc/nginx/ssl/inception.crt -keyout /etc/nginx/ssl/inception.key -subj "/C=FR/ST=OCCITANIE/L=Perpignan/O=42/OU=42/CN=mcreus.42.fr/UID=mcreus"
+COPY ./tools/nginx.sh /tmp/nginx.sh
 
-RUN mkdir -p /var/run/nginx
-
-COPY conf/nginx.conf /etc/nginx/nginx.conf
-
-RUN chmod 755 /var/www/html
-
-RUN chown -R www-data:www-data /var/www/html
+RUN ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
 
 EXPOSE 443
 
-CMD [ "nginx", "-g", "daemon off;" ]
+ENTRYPOINT ["sh", "/tmp/nginx.sh"]
