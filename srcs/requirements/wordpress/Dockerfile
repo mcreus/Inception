@@ -1,25 +1,14 @@
+FROM debian:buster
 
-FROM	debian:buster
+RUN apt-get update && apt-get -y install php7.3 php-mysqli php-fpm wget sendmail
 
-RUN     apt update -y && \
-        apt-get upgrade -y && \
-        apt-get install -y php \
-        php-mysql \
-        php-cli \
-        php-mbstring \
-        php-fpm \
-        php-gettext \
-        mariadb-client \
-        wget && \
-        rm -rf /etc/php/7.3/fpm/pool.d/www.conf && \
-        mkdir -p /run/php
+EXPOSE 9000
 
-COPY    ./conf/www.conf /etc/php/7.3/fpm/pool.d/
+COPY ./conf/www.conf /etc/php/7.3/fpm/pool.d
+COPY ./tools /var/www/
 
-COPY    ./tools/wordpress.sh /tmp/
+RUN chmod +x /var/www/wordpress_start.sh
 
-RUN     chmod +x /tmp/wordpress.sh
+ENTRYPOINT [ "/var/www/wordpress_start.sh" ]
 
-#EXPOSE	9000
-
-ENTRYPOINT [ "sh", "/tmp/wordpress.sh" ]
+CMD ["/usr/sbin/php-fpm7.3", "--nodaemonize"]
